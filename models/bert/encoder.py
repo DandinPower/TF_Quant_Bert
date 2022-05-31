@@ -1,6 +1,7 @@
 import tensorflow as tf
 import sys
 import time 
+kernel =  tf.load_op_library('./bits_quant.so')
 
 class AddParameter(tf.keras.layers.Layer):
     def __init__(self, nums,hiddens):
@@ -8,7 +9,7 @@ class AddParameter(tf.keras.layers.Layer):
         self.w = self.add_variable(name='weight',shape=[nums,hiddens], initializer=tf.zeros_initializer())
 
     def call(self, inputs):
-        return inputs + self.w
+        return kernel.bits_quant(inputs + self.w)
 
 class BERTEncoder(tf.keras.Model):
     def __init__(self, config, parameters):
@@ -24,6 +25,7 @@ class BERTEncoder(tf.keras.Model):
         X = self.token_embedding(tokens)
         X = X + self.segment_embedding(segments)
         X = self.pos_embedding(X)
+        print(X.numpy())
         return X
 
     def LoadParameters(self):
