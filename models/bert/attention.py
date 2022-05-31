@@ -7,6 +7,7 @@ from ..train.timer import GetTimeByDict
 class DotProductAttention(tf.keras.Model):
     def __init__(self, dropout,config):
         super(DotProductAttention, self).__init__()
+        self.kernel = tf.load_op_library('./bits_quant.so')
         self.config = config
         self.dropout = tf.keras.layers.Dropout(dropout)
         self.first = self.config.batchSize * self.config.numHeads
@@ -23,16 +24,16 @@ class DotProductAttention(tf.keras.Model):
             valid_lens = tf.reshape(valid_lens,[self.first,])
         d = queries.shape[-1]
         keys = tf.transpose(keys,[0,2,1])
-        scores = tf.matmul(queries, keys) / math.sqrt(d)
+        scores = self.kernel.bits_quant(self.kernel.bits_quant(tf.matmul(queries, keys)) / self.kernel.bits_quant(math.sqrt(d)))
         self.attention_weights = self.masked_softmax((scores,valid_lens))
-        result = tf.matmul(self.dropout(self.attention_weights), values)
-        return result
+        result = tf.matmul(self.kernel.bits_quant(self.dropout(self.attention_weights)), values)
+        return self.kernel.bits_quant(result)
 
     def sequence_mask(self,X, valid_len, value=0):
         maxlen = X.shape[1]
         mask = tf.range((maxlen),dtype=tf.float32)[None, :] < valid_len[:, None]
         X = tf.where(mask,X,value)
-        return X
+        return self.kernel.bits_quant(X)
 
     def masked_softmax(self,inputs):
         (X,valid_lens) = inputs
@@ -50,12 +51,13 @@ class DotProductAttention(tf.keras.Model):
                                 value=-1e6)
             X = tf.reshape(X,shape)
             result = tf.nn.softmax(X, axis=-1)
-            return result
+            return self.kernel.bits_quant(result)
 
 
 class MultiHeadAttention(tf.keras.Model):
     def __init__(self,config,parameters,index,bias=False):
         super(MultiHeadAttention, self).__init__()
+        self.kernel = tf.load_op_library('./bits_quant.so')
         self.num_heads = config.numHeads
         self.config = config 
         self.parameters = parameters 
@@ -68,7 +70,7 @@ class MultiHeadAttention(tf.keras.Model):
 
     def call(self, inputs):
         (queries, keys, values, valid_lens) = inputs
-        queries = self.W_q(queries)
+        queries = self.kernel.bits_quant(self.W_q(queries))
         queries = self.transpose_qkv((queries, self.num_heads))
         keys = self.transpose_qkv((self.W_k(keys), self.num_heads))
         values = self.transpose_qkv((self.W_v(values), self.num_heads))
@@ -78,7 +80,7 @@ class MultiHeadAttention(tf.keras.Model):
         output = self.attention((queries, keys, values ,valid_lens))
         output_concat = self.transpose_output((output, self.num_heads))
         result = self.W_o(output_concat)
-        return result
+        return self.kernel.bits_quant(result)
 
     def transpose_qkv(self,inputs):
         (X, num_heads) = inputs

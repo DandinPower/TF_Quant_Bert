@@ -8,6 +8,7 @@ from ..train.timer import GetTimeByDict
 class BERTModel(tf.keras.Model):
     def __init__(self, config, parameters):
         super(BERTModel, self).__init__()
+        self.kernel = tf.load_op_library('./bits_quant.so')
         self.parameters = parameters
         self.encoder = BERTEncoder(config,parameters)
         self.block1 = EncoderBlock(config,parameters,0,True)
@@ -23,7 +24,7 @@ class BERTModel(tf.keras.Model):
         embeddingX = self.encoder((tokens,segments))
         X = self.block1((embeddingX, valid_lens))
         X = self.block2((X, valid_lens))
-        X = self.hidden(X[:, 0, :])
+        X = self.kernel.bits_quant(self.hidden(X[:, 0, :]))
         return X
 
     def LoadParameters(self):
@@ -34,6 +35,7 @@ class BERTModel(tf.keras.Model):
 class BERTClassifier(tf.keras.Model):
     def __init__(self, config, parameters):
         super(BERTClassifier, self).__init__()
+        self.kernel = tf.load_op_library('./bits_quant.so')
         self.config = config 
         self.parameters = parameters
         self.bert = BERTModel(config, self.parameters)
@@ -44,8 +46,8 @@ class BERTClassifier(tf.keras.Model):
         tempValid = self.GetValidLen(tokens)
         inputs = (tokens,tempSegments,tempValid)
         output = self.bert(inputs)
-        output = self.classifier(output)
-        result = tf.nn.softmax(output)
+        output = self.kernel.bits_quant(self.classifier(output))
+        result = self.kernel.bits_quant(tf.nn.softmax(output))
         return result
 
     def GetValidLen(self,inputs):
