@@ -111,9 +111,9 @@ def QatTest():
 
 if __name__ == "__main__":
     #MultiTest()
-    #TrainAndSave()
+    TrainAndSave()
     #OnlyInference()
-    DataFlowTest()
+    #DataFlowTest()
     #SingleTest()
     #WriteTfLite(MODEL_SAVE_PATH, TFLITE_PATH)
     #WriteInt8TFLite(MODEL_SAVE_PATH, TFLITE_INT8_PATH)
