@@ -2,6 +2,11 @@ import tensorflow as tf
 import sys
 import time 
 
+@ops.RegisterGradient("BitsQuant")
+def _bits_quant_grad(op, grad):
+  inputs = op.inputs[0]
+  return [grad] 
+
 class AddParameter(tf.keras.layers.Layer):
     def __init__(self, nums,hiddens):
         super().__init__()

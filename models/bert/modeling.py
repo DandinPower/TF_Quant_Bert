@@ -5,6 +5,11 @@ import tensorflow as tf
 import time 
 from ..train.timer import GetTimeByDict
 
+@ops.RegisterGradient("BitsQuant")
+def _bits_quant_grad(op, grad):
+  inputs = op.inputs[0]
+  return [grad] 
+
 class BERTModel(tf.keras.Model):
     def __init__(self, config, parameters):
         super(BERTModel, self).__init__()
