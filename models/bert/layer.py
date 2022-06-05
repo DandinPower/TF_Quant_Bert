@@ -1,11 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.framework import ops
 
-@ops.RegisterGradient("BitsQuant")
-def _bits_quant_grad(op, grad):
-  inputs = op.inputs[0]
-  return [grad] 
-
 class LinearLayer(tf.keras.layers.Layer):
     def __init__(self, input_dim,output_dim):
         super().__init__()

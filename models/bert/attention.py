@@ -3,13 +3,6 @@ import math
 from .layer import LinearLayer
 import time
 from ..train.timer import GetTimeByDict
-from tensorflow.python.framework import ops
-
-
-@ops.RegisterGradient("BitsQuant")
-def _bits_quant_grad(op, grad):
-  inputs = op.inputs[0]
-  return [grad] 
 
 class DotProductAttention(tf.keras.Model):
     def __init__(self, dropout,config):
