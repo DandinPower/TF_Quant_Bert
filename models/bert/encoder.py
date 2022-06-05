@@ -1,6 +1,7 @@
 import tensorflow as tf
 import sys
 import time 
+from tensorflow.python.framework import ops
 
 @ops.RegisterGradient("BitsQuant")
 def _bits_quant_grad(op, grad):

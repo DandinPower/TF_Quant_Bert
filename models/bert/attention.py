@@ -3,6 +3,8 @@ import math
 from .layer import LinearLayer
 import time
 from ..train.timer import GetTimeByDict
+from tensorflow.python.framework import ops
+
 
 @ops.RegisterGradient("BitsQuant")
 def _bits_quant_grad(op, grad):
